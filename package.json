@@ -181,6 +181,7 @@
     "prosemirror-highlight": "^0.15.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "ioredis-om": "^5.10.2",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.6",
     "rehype-katex": "^7.0.1",
