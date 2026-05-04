@@ -31,27 +31,30 @@ COPY apps/webui/package.json apps/webui/
 
 # Install Bun runtime as non-root user
 USER 1001
+USER 0
+RUN dnf install -y curl && curl -fsSL https://bun.sh/install | bash && echo 'export PATH=$HOME/.bun/bin:$PATH' >> ~/.bashrc && export PATH=$HOME/.bun/bin:$PATH && dnf clean all
+USER 1001
 RUN curl -fsSL https://bun.sh/install | bash && \
     echo 'export PATH="/home/craftagents/.bun/bin:$PATH"' >> ~/.bashrc
 ENV PATH="/home/craftagents/.bun/bin:${PATH}"
 
-# Install dependencies
-RUN bun install --frozen-lockfile
+# Install dependencies using full path to bun binary
+RUN /home/craftagents/.bun/bin/bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build MCP helper servers
-RUN bun build packages/session-mcp-server/src/index.ts \
+RUN /home/craftagents/.bun/bin/bun build packages/session-mcp-server/src/index.ts \
       --outfile packages/session-mcp-server/dist/index.js --target node --format cjs && \
-    bun build packages/pi-agent-server/src/index.ts \
+    /home/craftagents/.bun/bin/bun build packages/pi-agent-server/src/index.ts \
       --outfile packages/pi-agent-server/dist/index.js --target node --format cjs
 
 # Build WhatsApp worker
-RUN bun run scripts/build-wa-worker.ts
+RUN /home/craftagents/.bun/bin/bun run scripts/build-wa-worker.ts
 
 # Build web UI assets
-RUN bun run scripts/build-webui.ts
+RUN /home/craftagents/.bun/bin/bun run scripts/build-webui.ts
 
 # Adjust permissions for OpenShift arbitrary UID support
 USER 0
@@ -63,4 +66,4 @@ USER 1001
 EXPOSE 9100
 
 # Set entry point
-CMD ["bun", "run", "packages/server/src/index.ts"]
+CMD ["/home/craftagents/.bun/bin/bun", "run", "packages/server/src/index.ts"]
