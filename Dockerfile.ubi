@@ -10,7 +10,8 @@ RUN groupadd -r craftagents && \
     useradd -r -g craftagents -m -d /home/craftagents -s /bin/bash craftagents
 USER 1001
 
-WORKDIR /opt/app-root/src
+# Set home directory as working directory for Bun install
+WORKDIR /home/craftagents
 
 # Copy dependency manifests for layer caching
 COPY package.json bun.lock bunfig.toml .
@@ -30,35 +31,33 @@ COPY apps/viewer/package.json apps/viewer/
 COPY apps/webui/package.json apps/webui/
 
 # Install Bun runtime as non-root user
-USER 1001
 USER 0
 RUN dnf install -y --allowerasing curl && \
     curl -fsSL https://bun.sh/install | bash && \
     echo 'export PATH=$HOME/.bun/bin:$PATH' >> ~/.bashrc && \
-    export PATH=$HOME/.bun/bin:$PATH && \
     dnf clean all
 USER 1001
-RUN curl -fsSL https://bun.sh/install | bash && \
-    echo 'export PATH="/home/craftagents/.bun/bin:$PATH"' >> ~/.bashrc
+
+# Set proper environment for Bun
 ENV PATH="/home/craftagents/.bun/bin:${PATH}"
 
-# Install dependencies using full path to bun binary
-RUN /home/craftagents/.bun/bin/bun install --frozen-lockfile
+# Install dependencies
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
 # Build MCP helper servers
-RUN /home/craftagents/.bun/bin/bun build packages/session-mcp-server/src/index.ts \
+RUN bun build packages/session-mcp-server/src/index.ts \
       --outfile packages/session-mcp-server/dist/index.js --target node --format cjs && \
-    /home/craftagents/.bun/bin/bun build packages/pi-agent-server/src/index.ts \
+    bun build packages/pi-agent-server/src/index.ts \
       --outfile packages/pi-agent-server/dist/index.js --target node --format cjs
 
 # Build WhatsApp worker
-RUN /home/craftagents/.bun/bin/bun run scripts/build-wa-worker.ts
+RUN bun run scripts/build-wa-worker.ts
 
 # Build web UI assets
-RUN /home/craftagents/.bun/bin/bun run scripts/build-webui.ts
+RUN bun run scripts/build-webui.ts
 
 # Adjust permissions for OpenShift arbitrary UID support
 USER 0
@@ -70,4 +69,4 @@ USER 1001
 EXPOSE 9100
 
 # Set entry point
-CMD ["/home/craftagents/.bun/bin/bun", "run", "packages/server/src/index.ts"]
+CMD ["bun", "run", "packages/server/src/index.ts"]
