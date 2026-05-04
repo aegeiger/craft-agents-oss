@@ -6,7 +6,10 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 
 # Install system dependencies
 USER 0
-RUN dnf install -y ca-certificates git ripgrep curl-minimal gnupg && dnf clean all
+# Enable EPEL and install ripgrep
+RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    dnf install -y ca-certificates git ripgrep curl-minimal gnupg && \
+    dnf clean all
 USER 1001
 
 # Create non-root user
