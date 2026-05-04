@@ -12,9 +12,11 @@ RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.n
     dnf clean all
 USER 1001
 
-# Create non-root user
+# Create non-root user (must be root)
+USER 0
 RUN groupadd -r craftagents && \
     useradd -r -g craftagents -m -d /home/craftagents -s /bin/bash craftagents
+USER 1001
 
 WORKDIR /opt/app-root/src
 
@@ -59,9 +61,6 @@ RUN bun run scripts/build-webui.ts
 USER 0
 RUN chgrp -R 0 /opt/app-root && \
     chmod -R g=u /opt/app-root
-USER 1001
-
-# Switch to non-root user
 USER 1001
 
 # Expose port
