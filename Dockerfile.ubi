@@ -32,7 +32,11 @@ COPY apps/webui/package.json apps/webui/
 # Install Bun runtime as non-root user
 USER 1001
 USER 0
-RUN dnf install -y curl && curl -fsSL https://bun.sh/install | bash && echo 'export PATH=$HOME/.bun/bin:$PATH' >> ~/.bashrc && export PATH=$HOME/.bun/bin:$PATH && dnf clean all
+RUN dnf install -y --allowerasing curl && \
+    curl -fsSL https://bun.sh/install | bash && \
+    echo 'export PATH=$HOME/.bun/bin:$PATH' >> ~/.bashrc && \
+    export PATH=$HOME/.bun/bin:$PATH && \
+    dnf clean all
 USER 1001
 RUN curl -fsSL https://bun.sh/install | bash && \
     echo 'export PATH="/home/craftagents/.bun/bin:$PATH"' >> ~/.bashrc
