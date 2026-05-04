@@ -4,13 +4,6 @@ LABEL org.opencontainers.image.source="https://github.com/lukilabs/craft-agents-
 LABEL org.opencontainers.image.description="Craft Agents Server — headless AI workflow server"
 LABEL org.opencontainers.image.licenses="Apache-2.0"
 
-# Install system dependencies
-USER 0
-RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
-    dnf install -y ca-certificates git ripgrep curl-minimal gnupg && \
-    dnf clean all
-USER 1001
-
 # Create non-root user
 USER 0
 RUN groupadd -r craftagents && \
@@ -20,7 +13,7 @@ USER 1001
 WORKDIR /opt/app-root/src
 
 # Copy dependency manifests for layer caching
-COPY package.json bun.lock bunfig.toml ./
+COPY package.json bun.lock bunfig.toml .
 COPY packages/server/package.json packages/server/
 COPY packages/server-core/package.json packages/server-core/
 COPY packages/shared/package.json packages/shared/
@@ -36,13 +29,13 @@ COPY apps/electron/package.json apps/electron/
 COPY apps/viewer/package.json apps/viewer/
 COPY apps/webui/package.json apps/webui/
 
-# Install Bun runtime (critical fix for missing command)
-USER 0
-RUN curl -fsSL https://bun.sh/install | bash
-# Explicitly add Bun to PATH for subsequent commands
-ENV PATH="/root/.bun/bin:${PATH}"
+# Install Bun runtime as non-root user
 USER 1001
+RUN curl -fsSL https://bun.sh/install | bash && \
+    echo 'export PATH="/home/craftagents/.bun/bin:$PATH"' >> ~/.bashrc
+ENV PATH="/home/craftagents/.bun/bin:${PATH}"
 
+# Install dependencies
 RUN bun install --frozen-lockfile
 
 # Copy source code
